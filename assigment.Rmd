@@ -1,5 +1,5 @@
 ---
-title: "Predcition Assigment"
+title: "Prediction Assigment"
 author: "Richard Shaw"
 date: "February 21, 2015"
 output: html_document
@@ -11,7 +11,8 @@ Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible t
 
 The goal of your project is to predict the manner in which they did the exercise using the "classe" variable.
 
-This report describes
+This report describes:
+
  * how a model was built 
  * use of cross validation
  * expected out of sample error
