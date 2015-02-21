@@ -1,0 +1,89 @@
+---
+title: "Predcition Assigment"
+author: "Richard Shaw"
+date: "February 21, 2015"
+output: html_document
+---
+
+# Introduction
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks.
+
+The goal of your project is to predict the manner in which they did the exercise using the "classe" variable.
+
+This report describes
+ * how a model was built 
+ * use of cross validation
+ * expected out of sample error
+
+Data kindly made available by http://groupware.les.inf.puc-rio.br/har
+
+# Data processing an setup
+
+```{r}
+library("caret")
+set.seed(1208)
+
+# Local file names
+train <- "train.csv"
+trainUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+
+test <- "test.csv"
+testUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+# Method = is download method, defaults to curl because this was created on a mac.
+method="curl"
+
+# Assume data is in working dir but will
+# download data if it's not around
+if(!file.exists(train)) {
+    download.file(trainUrl,train,method=method)
+}
+
+if(!file.exists(test)) {
+    download.file(testUrl,test,method="curl")
+}
+
+# Load data into var
+trainData = read.csv("train.csv")
+testData = read.csv("test.csv")
+
+# Remove columns that contain NA or blank values
+cleanTrainData = trainData
+cleanTrainData[cleanTrainData==""] = NA
+cleanTrainData = cleanTrainData[,colSums(is.na(cleanTrainData)) == 0]
+# Remove columns that aren't likley to be useful e.g. username
+cleanTrainData  = cleanTrainData[,-c(1:7)] 
+
+# Create data partition to separate out validation and training data
+intrain<-createDataPartition(cleanTrainData$classe, p=0.7, list=FALSE)
+trainDataTrain<-cleanTrainData[intrain,]
+trainDataValidation<-cleanTrainData[-intrain,]
+```
+
+# Model creation and validation
+
+A Random Forest model was created based on the 53 features available after cleaning, using the sample of training data created during cleaning. 
+The model is cross validated across 4 folds.
+
+```{r echo=FALSE, cache=TRUE}
+# Setup training control to use cross validation
+trainCtrl <- trainControl(method = "cv", number = 4)
+# Create model
+model <- train(classe ~ .,data=trainDataTrain,method="rf",trControl=trainCtrl)
+```
+
+Additionally the model is validated against new data using the validation dataset created during cleaning.
+```{r}
+predictValidation <- predict(model, trainDataValidation)
+```
+
+A confusion matrix allows us to se the accuracy of the model, ~99% and the out sample error of < 1%.
+```{r}
+confusionMatrix(trainDataValidation$classe, predictValidation)
+```
+# Appendix
+## Plot of model variable importance
+```{r, echo=FALSE}
+varImpPlot(model$finalModel)
+```
